@@ -41,13 +41,3 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
-      - name: Scan Docker image
-        id: docker-scan
-        uses: alexjurkiewicz/ecr-scan-image@v1.7.1
-        with:
-          repository: cloudevopsguru/demo1
-          tag: ${{ steps.docker-tag.outputs.tag }}
-          fail_threshold: medium
-      # Access scan results in later steps
-      - run: echo "${{ steps.docker-scan.outputs.total }} total vulnerabilities."
