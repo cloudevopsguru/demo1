@@ -12,6 +12,8 @@ jobs:
     
     name: Build Image
     runs-on: ubuntu-latest
+    env:
+      aws_region: us-west-2
 
     steps:
 
@@ -23,17 +25,37 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-west-2
+        aws-region: $aws_region
 
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag, and push image to Amazon ECR
+    - name: Build & Push Docker image
+      id: docker-build
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: demo1
-        IMAGE_TAG: demo1-node-js
+        ECR_REPOSITORY: cloudevopsguru/demo1
+        # Use the git tag as the image tag.
+        # github.ref format is like `refs/tags/v0.0.1`, so we strip the the
+        # `refs/tags/` prefix and export this for later use.
+        IMAGE_TAG: ${{ github.ref }}
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        tag=${IMAGE_TAG##refs/tags/}
+        echo "Tag is $tag"
+        echo "::set-output name=tag::$tag"
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$tag .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$tag
+
+    - name: Scan Docker image
+      id: docker-scan
+      uses: alexjurkiewicz/ecr-scan-image@v1.7.1
+      with:
+        repository: cloudevopsguru/demo1
+        tag: ${{ steps.docker-build.outputs.tag }}
+        fail_threshold: medium
+        ignore_list: |
+          CVE-2014-7654321
+          CVE-2014-456132
+    # Access scan results in later steps
+    - run: echo "${{ steps.docker-scan.outputs.total }} total vulnerabilities."
