@@ -47,7 +47,7 @@ jobs:
         uses: alexjurkiewicz/ecr-scan-image@v1.7.1
         with:
           repository: cloudevopsguru/demo1
-          tag: ${{ steps.docker-build.outputs.tag }}
+          tag: ${{ steps.docker-tag.outputs.tag }}
           fail_threshold: medium
           ignore_list: |
             CVE-2014-7654321
