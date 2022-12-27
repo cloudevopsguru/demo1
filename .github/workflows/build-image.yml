@@ -49,8 +49,5 @@ jobs:
           repository: cloudevopsguru/demo1
           tag: ${{ steps.docker-tag.outputs.tag }}
           fail_threshold: medium
-          ignore_list: |
-            CVE-2014-7654321
-            CVE-2014-456132
       # Access scan results in later steps
       - run: echo "${{ steps.docker-scan.outputs.total }} total vulnerabilities."
